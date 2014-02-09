@@ -27,7 +27,7 @@ import java.awt.Font;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 /**
- * Out
+ * OutTextArea
  *
  * @author  Christoph Kappestein <k42b3.x@gmail.com>
  * @license http://www.gnu.org/licenses/gpl.html GPLv3
