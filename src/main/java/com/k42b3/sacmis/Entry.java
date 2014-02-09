@@ -3,7 +3,7 @@
  * An application wich writes an script from an textarea to a file and executes 
  * it with a selected processor. The result is displayed in another textfield.
  * 
- * Copyright (c) 2010-2013 Christoph Kappestein <k42b3.x@gmail.com>
+ * Copyright (c) 2010-2014 Christoph Kappestein <k42b3.x@gmail.com>
  * 
  * This file is part of sacmis. sacmis is free software: you can 
  * redistribute it and/or modify it under the terms of the GNU 
@@ -21,25 +21,33 @@
 
 package com.k42b3.sacmis;
 
-import java.awt.Color;
-import java.awt.Font;
+import javax.swing.UIManager;
 
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.apache.log4j.Logger;
 
 /**
- * In
+ * Entry
  *
  * @author  Christoph Kappestein <k42b3.x@gmail.com>
  * @license http://www.gnu.org/licenses/gpl.html GPLv3
  * @link    https://github.com/k42b3/sacmis
  */
-public class In extends RSyntaxTextArea
+public class Entry 
 {
-	public In()
+	public static void main(String[] args)
 	{
-		this.setFont(new Font("Monospaced", Font.PLAIN, 12));
-		this.setEditable(true);
-		this.setBackground(new Color(255, 255, 255));
-		this.setForeground(new Color(0, 0, 0));
+        try
+        {
+    		String lookAndFeel = UIManager.getSystemLookAndFeelClassName();
+        	UIManager.setLookAndFeel(lookAndFeel);
+
+        	// start sacmis
+        	Sacmis win = new Sacmis();
+        	win.setVisible(true);
+        }
+        catch(Exception e)
+        {
+        	Logger.getLogger("com.k42b3.sacmis").error(e.getMessage(), e);
+        }
 	}
 }

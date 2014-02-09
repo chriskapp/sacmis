@@ -3,7 +3,7 @@
  * An application wich writes an script from an textarea to a file and executes 
  * it with a selected processor. The result is displayed in another textfield.
  * 
- * Copyright (c) 2010-2013 Christoph Kappestein <k42b3.x@gmail.com>
+ * Copyright (c) 2010-2014 Christoph Kappestein <k42b3.x@gmail.com>
  * 
  * This file is part of sacmis. sacmis is free software: you can 
  * redistribute it and/or modify it under the terms of the GNU 
@@ -21,31 +21,18 @@
 
 package com.k42b3.sacmis;
 
-import javax.swing.UIManager;
+import junit.framework.TestCase;
 
 /**
- * Entry
+ * SacmisTest
  *
  * @author  Christoph Kappestein <k42b3.x@gmail.com>
  * @license http://www.gnu.org/licenses/gpl.html GPLv3
- * @link    https://github.com/k42b3/sacmis
+ * @link    https://github.com/k42b3/neodym
  */
-public class Entry 
+public class SacmisTest extends TestCase
 {
-	public static void main(String[] args)
-	{
-        try
-        {
-    		String lookAndFeel = UIManager.getSystemLookAndFeelClassName();
-        	UIManager.setLookAndFeel(lookAndFeel);
-
-        	// start sacmis
-        	Sacmis win = new Sacmis();
-        	win.setVisible(true);
-        }
-        catch(Exception e)
-        {
-        	System.err.print(e.getMessage());
-        }
-	}
+    public void testNotImplemented()
+    {
+    }
 }

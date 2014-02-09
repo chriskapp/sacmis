@@ -3,7 +3,7 @@
  * An application wich writes an script from an textarea to a file and executes 
  * it with a selected processor. The result is displayed in another textfield.
  * 
- * Copyright (c) 2010-2013 Christoph Kappestein <k42b3.x@gmail.com>
+ * Copyright (c) 2010-2014 Christoph Kappestein <k42b3.x@gmail.com>
  * 
  * This file is part of sacmis. sacmis is free software: you can 
  * redistribute it and/or modify it under the terms of the GNU 
@@ -105,6 +105,30 @@ public class MenuBar extends JMenuBar
 		});
 		menu.add(itemLoad);
 		
+		JMenuItem itemNewTab = new JMenuItem("New Tab");
+		itemNewTab.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.CTRL_MASK));
+		itemNewTab.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) 
+			{
+				listener.onActionNewTab();
+			}
+
+		});
+		menu.add(itemNewTab);
+
+		JMenuItem itemCloseTab = new JMenuItem("Close Tab");
+		itemCloseTab.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK));
+		itemCloseTab.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) 
+			{
+				listener.onActionCloseTab();
+			}
+
+		});
+		menu.add(itemCloseTab);
+		
 		JMenuItem itemAbout = new JMenuItem("About");
 		itemAbout.addActionListener(new ActionListener() {
 
@@ -136,6 +160,8 @@ public class MenuBar extends JMenuBar
 		public void onActionReset();
 		public void onActionSave();
 		public void onActionLoad();
+		public void onActionNewTab();
+		public void onActionCloseTab();
 		public void onActionAbout();
 		public void onActionExit();
 	}

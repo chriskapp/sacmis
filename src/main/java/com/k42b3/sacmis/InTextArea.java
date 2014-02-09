@@ -3,7 +3,7 @@
  * An application wich writes an script from an textarea to a file and executes 
  * it with a selected processor. The result is displayed in another textfield.
  * 
- * Copyright (c) 2010-2013 Christoph Kappestein <k42b3.x@gmail.com>
+ * Copyright (c) 2010-2014 Christoph Kappestein <k42b3.x@gmail.com>
  * 
  * This file is part of sacmis. sacmis is free software: you can 
  * redistribute it and/or modify it under the terms of the GNU 
@@ -25,17 +25,19 @@ import java.awt.Color;
 import java.awt.Font;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
 
 /**
- * Out
+ * In
  *
  * @author  Christoph Kappestein <k42b3.x@gmail.com>
  * @license http://www.gnu.org/licenses/gpl.html GPLv3
  * @link    https://github.com/k42b3/sacmis
  */
-public class Out extends RSyntaxTextArea
+public class InTextArea extends RSyntaxTextArea
 {
-	public Out()
+	public InTextArea()
 	{
 		this.setFont(new Font("Monospaced", Font.PLAIN, 12));
 		this.setEditable(true);
