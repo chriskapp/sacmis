@@ -23,7 +23,10 @@ package com.k42b3.sacmis;
 
 import javax.swing.UIManager;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 
 /**
  * Entry
@@ -36,6 +39,9 @@ public class Entry
 {
 	public static void main(String[] args)
 	{
+		Logger.getRootLogger().setLevel(Level.INFO);
+		Logger.getLogger("com.k42b3.sacmis").addAppender(new ConsoleAppender(new PatternLayout()));
+
         try
         {
     		String lookAndFeel = UIManager.getSystemLookAndFeelClassName();

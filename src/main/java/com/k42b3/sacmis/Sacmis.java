@@ -39,8 +39,10 @@ import java.util.Queue;
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -48,6 +50,7 @@ import javax.swing.JViewport;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileFilter;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
@@ -55,6 +58,7 @@ import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ExecuteResultHandler;
 import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
@@ -69,13 +73,13 @@ import com.k42b3.sacmis.MenuBar.MenuBarActionListener;
  */
 public class Sacmis extends JFrame
 {
-	public static final String VERSION = "0.0.8";
+	public static final String VERSION = "0.1.0";
 
 	protected Logger logger = Logger.getLogger("com.k42b3.sacmis");
 
 	protected int exitCode = 0;
 	protected boolean writeStdIn = false;
-	protected long timeout = 4000;
+	protected long timeout = 30000;
 	protected String inputCache = "input-%num%.cache";
 
 	protected JTabbedPane tp;
@@ -91,7 +95,7 @@ public class Sacmis extends JFrame
 		// settings
 		this.setTitle("Sacmis (version: " + VERSION + ")");
 		this.setLocation(100, 100);
-		this.setSize(600, 500);
+		this.setSize(800, 600);
 		this.setMinimumSize(this.getSize());
 
 		// set toolbar
@@ -110,7 +114,6 @@ public class Sacmis extends JFrame
 
 		this.add(tp, BorderLayout.CENTER);
 
-		// toolbar	
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		// add tab
@@ -162,12 +165,27 @@ public class Sacmis extends JFrame
 				onExit();
 			}
 
+			public void onComposerOpen()
+			{
+				onOpen();
+			}
+
+			public void onComposerUpdate()
+			{
+				onUpdate();
+			}
+
+			public void onComposerRequire()
+			{
+				onRequire();
+			}
+
 		});
 
 		return menuBar;
 	}
-	
-	protected JComponent buildMainPanel()
+
+	protected JComponent buildMainPanel(int num)
 	{
 		// processor
 		JPanel panelNorth = new JPanel();
@@ -175,8 +193,7 @@ public class Sacmis extends JFrame
 		panelNorth.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
 		String[] calls = {
-			"php %file%",
-			"python %file%"
+			"php %file-" + num + "%"
 		};
 
 		JComboBox<String> args = new JComboBox<String>(calls);
@@ -216,7 +233,7 @@ public class Sacmis extends JFrame
 
 		return panel;
 	}
-	
+
 	protected Container getActivePanel()
 	{
 		return (Container) tp.getSelectedComponent();
@@ -312,7 +329,7 @@ public class Sacmis extends JFrame
 
 	protected void newTab()
 	{
-		tp.addTab("Tab-" + (tp.getTabCount()), this.buildMainPanel());
+		tp.addTab("Tab-" + (tp.getTabCount()), this.buildMainPanel(tp.getTabCount()));
 		tp.setSelectedIndex(tp.getTabCount() - 1);
 
 		// load file
@@ -324,10 +341,13 @@ public class Sacmis extends JFrame
 
 	protected void closeTab()
 	{
-		tp.remove(tp.getSelectedIndex());
+		if(tp.getTabCount() > 1)
+		{
+			tp.remove(tp.getSelectedIndex());
+		}
 	}
 
-	protected void executeCommand(String input)
+	protected void executeCommand(String input, final int num, boolean writeStdIn)
 	{
 		this.getActiveOut().setText("");
 		String cmd = commandQueue.poll();
@@ -335,9 +355,7 @@ public class Sacmis extends JFrame
 		try
 		{
 			// replace input cache file
-			cmd = cmd.replaceAll("%file%", this.getInputFile());
-
-			logger.info("Execute: " + cmd);
+			logger.info("Execute-" + num + ": " + cmd);
 
 			// save file
 			saveFile();
@@ -355,7 +373,7 @@ public class Sacmis extends JFrame
 			this.baos = new ByteArrayOutputStream();
 			this.baosErr = new ByteArrayOutputStream();
 
-			if(this.writeStdIn)
+			if(writeStdIn)
 			{
 				this.bais = new ByteArrayInputStream(input.getBytes());
 
@@ -373,7 +391,7 @@ public class Sacmis extends JFrame
 				{
 					if(commandQueue.size() > 0)
 					{
-						executeCommand(baos.toString());
+						executeCommand(baos.toString(), num, true);
 					}
 					else
 					{
@@ -415,12 +433,19 @@ public class Sacmis extends JFrame
 
 		for(int i = 0; i < commands.length; i++)
 		{
-			commandQueue.add(commands[i].trim());
+			String realCmd = commands[i].trim();
+
+			for(int j = 0; j < tp.getTabCount(); j++)
+			{
+				realCmd = realCmd.replaceAll("%file-" + j + "%", inputCache.replaceAll("%num%", "" + j));
+			}
+
+			commandQueue.add(realCmd);
 		}
 
 		logger.info("Added " + commandQueue.size() + " commands to the queue");
 
-		executeCommand(this.getActiveIn().getText());
+		executeCommand(this.getActiveIn().getText(), tp.getSelectedIndex(), this.writeStdIn);
 	}
 	
 	protected void onReset()
@@ -450,5 +475,81 @@ public class Sacmis extends JFrame
 		saveFile();
 
 		System.exit(0);
+	}
+	
+	/**
+	 * We copy the selected composer.json to our current working dir and execute 
+	 * an composer install
+	 */
+	protected void onOpen()
+	{
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setMultiSelectionEnabled(false);
+		fileChooser.setFileFilter(new JsonFilter());
+
+		int returnValue = fileChooser.showOpenDialog(this);
+
+		if(returnValue == JFileChooser.APPROVE_OPTION)
+		{
+			File selectedFile = fileChooser.getSelectedFile();
+			File destFile = new File("composer.json");
+
+			try
+			{
+				FileUtils.copyFile(selectedFile, destFile);
+
+				// remove composer lock
+				File lock = new File("composer.lock");
+				if(lock.isFile())
+				{
+					lock.delete();
+				}
+
+				new Thread(new ComposerExecutor("install", getActiveOut())).start();
+			}
+			catch(Exception e)
+			{
+				JOptionPane.showMessageDialog(null, e.getMessage(), "Information", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+	}
+
+	protected void onUpdate()
+	{
+		try
+		{
+			new Thread(new ComposerExecutor("update", getActiveOut())).start();
+		}
+		catch(Exception e)
+		{
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Information", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	protected void onRequire()
+	{
+		try
+		{
+			String require = JOptionPane.showInputDialog("Please enter the required package with a version constraint, e.g. foo/bar:1.0.0 or foo/bar=1.0.0 or \"foo/bar 1.0.0\"");
+
+			new Thread(new ComposerExecutor("require " + require, getActiveOut())).start();
+		}
+		catch(Exception e)
+		{
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Information", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	class JsonFilter extends FileFilter
+	{
+		public boolean accept(File pathname)
+		{
+			return pathname.isDirectory() || pathname.getName().endsWith(".json");
+		}
+
+		public String getDescription()
+		{
+			return "composer.json";
+		}
 	}
 }

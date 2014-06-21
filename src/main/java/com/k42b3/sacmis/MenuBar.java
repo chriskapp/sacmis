@@ -45,7 +45,8 @@ public class MenuBar extends JMenuBar
 	{
 		super();
 
-		buildAction();
+		this.buildAction();
+		this.buildComposer();
 	}
 
 	public void setActionListener(MenuBarActionListener listener)
@@ -154,6 +155,49 @@ public class MenuBar extends JMenuBar
 		this.add(menu);
 	}
 
+	protected void buildComposer()
+	{
+		JMenu menu = new JMenu("Composer");
+
+		JMenuItem itemOpen = new JMenuItem("Open");
+		itemOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
+		itemOpen.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) 
+			{
+				listener.onComposerOpen();
+			}
+
+		});
+		menu.add(itemOpen);
+
+		JMenuItem itemUpdate = new JMenuItem("Update");
+		itemUpdate.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_U, ActionEvent.CTRL_MASK));
+		itemUpdate.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) 
+			{
+				listener.onComposerUpdate();
+			}
+
+		});
+		menu.add(itemUpdate);
+
+		JMenuItem itemRequire = new JMenuItem("Require");
+		itemRequire.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.CTRL_MASK));
+		itemRequire.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) 
+			{
+				listener.onComposerRequire();
+			}
+
+		});
+		menu.add(itemRequire);
+
+		this.add(menu);
+	}
+
 	public interface MenuBarActionListener
 	{
 		public void onActionRun();
@@ -164,5 +208,8 @@ public class MenuBar extends JMenuBar
 		public void onActionCloseTab();
 		public void onActionAbout();
 		public void onActionExit();
+		public void onComposerOpen();
+		public void onComposerUpdate();
+		public void onComposerRequire();
 	}
 }
