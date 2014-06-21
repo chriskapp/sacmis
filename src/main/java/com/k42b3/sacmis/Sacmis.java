@@ -530,9 +530,12 @@ public class Sacmis extends JFrame
 	{
 		try
 		{
-			String require = JOptionPane.showInputDialog("Please enter the required package with a version constraint, e.g. foo/bar:1.0.0 or foo/bar=1.0.0 or \"foo/bar 1.0.0\"");
+			String require = JOptionPane.showInputDialog("Please enter the required package with a version constraint,\ne.g. foo/bar:1.0.0 or foo/bar=1.0.0 or \"foo/bar 1.0.0\"");
 
-			new Thread(new ComposerExecutor("require " + require, getActiveOut())).start();
+			if(require != null && !require.isEmpty())
+			{
+				new Thread(new ComposerExecutor("require " + require, getActiveOut())).start();	
+			}
 		}
 		catch(Exception e)
 		{
