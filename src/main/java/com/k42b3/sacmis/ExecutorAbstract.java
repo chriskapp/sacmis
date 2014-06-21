@@ -36,20 +36,20 @@ import org.apache.log4j.Logger;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 /**
- * ComposerExecutor
+ * ExecutorAbstract
  *
  * @author  Christoph Kappestein <k42b3.x@gmail.com>
  * @license http://www.gnu.org/licenses/gpl.html GPLv3
  * @link    https://github.com/k42b3/sacmis
  */
-public class ComposerExecutor implements Runnable
+abstract public class ExecutorAbstract implements Runnable
 {
 	protected Logger logger = Logger.getLogger("com.k42b3.sacmis");
 
 	protected String cmd;
 	protected RSyntaxTextArea textArea;
 
-	public ComposerExecutor(String cmd, RSyntaxTextArea textArea)
+	public ExecutorAbstract(String cmd, RSyntaxTextArea textArea)
 	{
 		this.cmd = cmd;
 		this.textArea = textArea;
@@ -62,7 +62,7 @@ public class ComposerExecutor implements Runnable
 			// clear text
 			this.textArea.setText("");
 
-			CommandLine commandLine = CommandLine.parse(this.getComposerExecutable() + " " + this.cmd);
+			CommandLine commandLine = CommandLine.parse(this.getExecutable() + " " + this.cmd);
 			ExecuteWatchdog watchdog = new ExecuteWatchdog(ExecuteWatchdog.INFINITE_TIMEOUT);
 
 			// create executor
@@ -79,25 +79,26 @@ public class ComposerExecutor implements Runnable
 	}
 
 	/**
-	 * Tries to find the composer executable
+	 * Tries to find the fitting executable
 	 * 
 	 * @return String
 	 * @throws IOException
 	 */
-	protected String getComposerExecutable() throws IOException
+	protected String getExecutable() throws IOException
 	{
-		String[] executables = {"composer", "composer.bat", "php composer.phar"};
+		String[] executables = this.getExecutables();
 
 		for(int i = 0; i < executables.length; i++)
 		{
 			try
 			{
-				Process process = Runtime.getRuntime().exec(executables[i] + " --version");
+				ExecutableDetector detector = this.getDetector();
+				Process process = Runtime.getRuntime().exec(executables[i] + " " + detector.getArgument());
 				BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
 				String line = input.readLine();
 				input.close();
 
-				if(line.startsWith("Composer version"))
+				if(line.matches("(.*)" + detector.getIndicator() + "(.*)"))
 				{
 					return executables[i];
 				}
@@ -108,9 +109,31 @@ public class ComposerExecutor implements Runnable
 			}
 		}
 
-		throw new RuntimeException("Could not find composer executable");
+		throw new RuntimeException("Could not find executable " + this.getName());
 	}
 
+	/**
+	 * Returns the name of the executable
+	 * 
+	 * @return String
+	 */
+	abstract protected String getName();
+
+	/**
+	 * Returns the executables which can be possible used by this executor
+	 * 
+	 * @return String[]
+	 */
+	abstract protected String[] getExecutables();
+
+	/**
+	 * Returns the informations for the executor howto detect the correct 
+	 * executable
+	 * 
+	 * @return ExecutableDetector
+	 */
+	abstract protected ExecutableDetector getDetector();
+	
 	/**
 	 * @see http://stackoverflow.com/a/5693905
 	 */

@@ -3,7 +3,7 @@
   <groupId>com.k42b3.sacmis</groupId>
   <artifactId>sacmis</artifactId>
   <packaging>jar</packaging>
-  <version>0.0.8</version>
+  <version>0.1.0</version>
   <name>sacmis</name>
   <url>https://github.com/k42b3/sacmis</url>
   <properties>

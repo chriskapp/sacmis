@@ -63,6 +63,7 @@ import org.apache.log4j.Logger;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
 import com.k42b3.sacmis.MenuBar.MenuBarActionListener;
+import com.k42b3.sacmis.executor.Composer;
 
 /**
  * Sacmis
@@ -192,8 +193,15 @@ public class Sacmis extends JFrame
 		panelNorth.setLayout(new BorderLayout());
 		panelNorth.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
+		String fileExtension = "";
+		if(System.getProperty("os.name").toLowerCase().startsWith("windows"))
+		{
+			fileExtension = ".bat";
+		}
+
 		String[] calls = {
-			"php %file-" + num + "%"
+			"php %file-" + num + "%",
+			"phpunit" + fileExtension + " --stderr %file-" + num + "%"
 		};
 
 		JComboBox<String> args = new JComboBox<String>(calls);
@@ -395,13 +403,30 @@ public class Sacmis extends JFrame
 					}
 					else
 					{
-						getActiveOut().setText(baos.toString());
+						setOutput(baos, baosErr);
 					}
 				}
 
 				public void onProcessFailed(ExecuteException e) 
 				{
-					getActiveOut().setText(baosErr.toString());
+					setOutput(baosErr, baos);
+				}
+
+				protected void setOutput(ByteArrayOutputStream out1, ByteArrayOutputStream out2)
+				{
+					String output = out1.toString();
+					if(!output.isEmpty())
+					{
+						getActiveOut().setText(output);
+					}
+					else
+					{
+						output = out2.toString();
+						if(!output.isEmpty())
+						{
+							getActiveOut().setText(output);
+						}
+					}
 				}
 
 			});
@@ -505,7 +530,7 @@ public class Sacmis extends JFrame
 					lock.delete();
 				}
 
-				new Thread(new ComposerExecutor("install", getActiveOut())).start();
+				new Thread(new Composer("install", getActiveOut())).start();
 			}
 			catch(Exception e)
 			{
@@ -518,7 +543,7 @@ public class Sacmis extends JFrame
 	{
 		try
 		{
-			new Thread(new ComposerExecutor("update", getActiveOut())).start();
+			new Thread(new Composer("update", getActiveOut())).start();
 		}
 		catch(Exception e)
 		{
@@ -534,7 +559,7 @@ public class Sacmis extends JFrame
 
 			if(require != null && !require.isEmpty())
 			{
-				new Thread(new ComposerExecutor("require " + require, getActiveOut())).start();	
+				new Thread(new Composer("require " + require, getActiveOut())).start();	
 			}
 		}
 		catch(Exception e)
