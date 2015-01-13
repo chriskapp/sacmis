@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sacmis>
+	<template name="SQL Query">
+		<require package="doctrine/dbal" version="~2.5" />
+		<source><![CDATA[
+<?php
+
+require_once('vendor/autoload.php');
+
+$sql = <<<SQL
+
+SELECT * FROM blog
+
+SQL;
+
+$params = array(
+    'dbname'   => 'db',
+    'user'     => 'user',
+    'password' => 'pw',
+    'host'     => 'localhost',
+    'driver'   => 'pdo_mysql',
+);
+
+$config = new \Doctrine\DBAL\Configuration();
+$connection = \Doctrine\DBAL\DriverManager::getConnection($params, $config);
+
+$stmt = $connection->query($sql);
+while ($row = $stmt->fetch()) {
+	foreach ($row as $key => $value) {
+		echo $key . ': ' . $value . "\n";
+	}
+	echo "\n";
+}
+
+]]></source>
+	</template>
+	<template name="RegExp">
+		<source><![CDATA[
+<?php
+
+$pattern = '/^foo([0-9]+)bar$/';
+$subject = <<<TEXT
+foo12bar
+TEXT;
+
+preg_match($pattern, $subject, $matches);
+
+var_dump($matches);
+
+]]></source>
+	</template>
+	<template name="HTTP Request">
+		<source><![CDATA[
+<?php
+
+$url = 'http://google.com';
+
+$ctx = array(
+	'method'  => 'GET',
+	'header'  => 'User-Agent: Sacmis' . "\r\n",
+	'content' => null,
+);
+
+$response = file_get_contents($url, false, stream_context_create(array('http' => $ctx)));
+
+echo $response;
+
+]]></source>
+	</template>
+	<template name="PHPUnit TestCase">
+		<source><![CDATA[
+<?php
+
+class Test extends PHPUnit_Framework_TestCase
+{
+	public function testFoo()
+	{
+		$this->assertEquals('foo', 'foo');
+	}
+}
+
+]]></source>
+	</template>
+</sacmis>
