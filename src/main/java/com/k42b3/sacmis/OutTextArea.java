@@ -3,7 +3,7 @@
  * An application wich writes an script from an textarea to a file and executes 
  * it with a selected processor. The result is displayed in another textfield.
  * 
- * Copyright (c) 2010-2014 Christoph Kappestein <k42b3.x@gmail.com>
+ * Copyright (c) 2010-2015 Christoph Kappestein <k42b3.x@gmail.com>
  * 
  * This file is part of sacmis. sacmis is free software: you can 
  * redistribute it and/or modify it under the terms of the GNU 

@@ -3,7 +3,7 @@
  * An application wich writes an script from an textarea to a file and executes 
  * it with a selected processor. The result is displayed in another textfield.
  * 
- * Copyright (c) 2010-2014 Christoph Kappestein <k42b3.x@gmail.com>
+ * Copyright (c) 2010-2015 Christoph Kappestein <k42b3.x@gmail.com>
  * 
  * This file is part of sacmis. sacmis is free software: you can 
  * redistribute it and/or modify it under the terms of the GNU 
@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.exec.CommandLine;
@@ -72,10 +73,38 @@ abstract public class ExecutorAbstract implements Runnable
 			executor.setWatchdog(watchdog);
 			executor.execute(commandLine);
 		}
+		catch(FoundNoExecutableException e)
+		{
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Information", JOptionPane.ERROR_MESSAGE);
+		}
 		catch(IOException e)
 		{
-			logger.error(e.getMessage());
+			logger.error(e.getMessage(), e);
 		}
+	}
+
+	/**
+	 * Returns whether the command returns an response that contains the given 
+	 * string
+	 * 
+	 * @param String cmd
+	 * @param String contains
+	 * @return boolean
+	 * @throws IOException 
+	 */
+	public static boolean hasExecutable(String cmd, String contains) throws IOException
+	{
+		Process process = Runtime.getRuntime().exec(cmd);
+		BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
+		String line;
+		StringBuilder response = new StringBuilder();
+		while((line = input.readLine()) != null)
+		{
+			response.append(line);
+		}
+		input.close();
+
+		return response.toString().indexOf(contains) != -1;
 	}
 
 	/**
@@ -84,32 +113,31 @@ abstract public class ExecutorAbstract implements Runnable
 	 * @return String
 	 * @throws IOException
 	 */
-	protected String getExecutable() throws IOException
+	protected String getExecutable() throws FoundNoExecutableException
 	{
 		String[] executables = this.getExecutables();
 
-		for(int i = 0; i < executables.length; i++)
+		if(executables != null)
 		{
-			try
+			for(int i = 0; i < executables.length; i++)
 			{
-				ExecutableDetector detector = this.getDetector();
-				Process process = Runtime.getRuntime().exec(executables[i] + " " + detector.getArgument());
-				BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
-				String line = input.readLine();
-				input.close();
-
-				if(line.matches("(.*)" + detector.getIndicator() + "(.*)"))
+				try
 				{
-					return executables[i];
+					ExecutableDetector detector = this.getDetector();
+
+					if(hasExecutable(executables[i] + " " + detector.getArgument(), detector.getIndicator()))
+					{
+						return executables[i];
+					}
 				}
-			}
-			catch(IOException e)
-			{
-				// an exception gets thrown if the executable does not exist
+				catch(IOException e)
+				{
+					// an exception gets thrown if the executable does not exist
+				}
 			}
 		}
 
-		throw new RuntimeException("Could not find executable " + this.getName());
+		throw new FoundNoExecutableException("Could not find executable " + this.getName());
 	}
 
 	/**

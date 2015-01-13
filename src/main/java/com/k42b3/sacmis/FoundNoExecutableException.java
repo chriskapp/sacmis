@@ -22,40 +22,16 @@
 package com.k42b3.sacmis;
 
 /**
- * ExecutableDetector
+ * FoundNoExecutableException
  *
  * @author  Christoph Kappestein <k42b3.x@gmail.com>
  * @license http://www.gnu.org/licenses/gpl.html GPLv3
  * @link    https://github.com/k42b3/sacmis
  */
-public class ExecutableDetector
+public class FoundNoExecutableException extends Exception
 {
-	protected String argument;
-	protected String indicator;
-
-	public ExecutableDetector(String argument, String indicator)
+	public FoundNoExecutableException(String message)
 	{
-		this.argument = argument;
-		this.indicator = indicator;
-	}
-
-	public String getArgument()
-	{
-		return argument;
-	}
-
-	public void setArgument(String argument)
-	{
-		this.argument = argument;
-	}
-
-	public String getIndicator()
-	{
-		return indicator;
-	}
-
-	public void setIndicator(String indicator)
-	{
-		this.indicator = indicator;
+		super(message);
 	}
 }

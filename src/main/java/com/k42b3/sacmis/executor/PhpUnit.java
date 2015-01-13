@@ -19,43 +19,41 @@
  * along with sacmis. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.k42b3.sacmis;
+package com.k42b3.sacmis.executor;
+
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+
+import com.k42b3.sacmis.ExecutableDetector;
+import com.k42b3.sacmis.ExecutorAbstract;
 
 /**
- * ExecutableDetector
+ * PhpUnit
  *
  * @author  Christoph Kappestein <k42b3.x@gmail.com>
  * @license http://www.gnu.org/licenses/gpl.html GPLv3
  * @link    https://github.com/k42b3/sacmis
  */
-public class ExecutableDetector
+public class PhpUnit extends ExecutorAbstract
 {
-	protected String argument;
-	protected String indicator;
-
-	public ExecutableDetector(String argument, String indicator)
+	public PhpUnit(String cmd, RSyntaxTextArea textArea)
 	{
-		this.argument = argument;
-		this.indicator = indicator;
+		super(cmd, textArea);
 	}
 
-	public String getArgument()
+	protected String getName()
 	{
-		return argument;
+		return "phpunit";
 	}
 
-	public void setArgument(String argument)
+	protected String[] getExecutables()
 	{
-		this.argument = argument;
+		String[] executables = {"phpunit", "phpunit.bat", "vendor/bin/phpunit", "vendor/bin/phpunit.bat", "php phpunit.phar"};
+
+		return executables;
 	}
 
-	public String getIndicator()
+	protected ExecutableDetector getDetector()
 	{
-		return indicator;
-	}
-
-	public void setIndicator(String indicator)
-	{
-		this.indicator = indicator;
+		return new ExecutableDetector("--version", "PHPUnit");
 	}
 }

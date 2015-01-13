@@ -3,7 +3,7 @@
  * An application wich writes an script from an textarea to a file and executes 
  * it with a selected processor. The result is displayed in another textfield.
  * 
- * Copyright (c) 2010-2014 Christoph Kappestein <k42b3.x@gmail.com>
+ * Copyright (c) 2010-2015 Christoph Kappestein <k42b3.x@gmail.com>
  * 
  * This file is part of sacmis. sacmis is free software: you can 
  * redistribute it and/or modify it under the terms of the GNU 
@@ -24,11 +24,16 @@ package com.k42b3.sacmis;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
 
 /**
  * MenuBar
@@ -46,7 +51,8 @@ public class MenuBar extends JMenuBar
 		super();
 
 		this.buildAction();
-		this.buildComposer();
+		this.buildProcess();
+		this.buildTemplate();
 	}
 
 	public void setActionListener(MenuBarActionListener listener)
@@ -155,10 +161,44 @@ public class MenuBar extends JMenuBar
 		this.add(menu);
 	}
 
-	protected void buildComposer()
+	protected void buildProcess()
 	{
-		JMenu menu = new JMenu("Composer");
+		JMenu menu = new JMenu("Process");
 
+		JMenu itemComposer = new JMenu("Composer");
+		this.buildComposer(itemComposer);
+
+		menu.add(itemComposer);
+
+		JMenuItem itemTest = new JMenuItem("PHPUnit");
+		itemTest.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
+		itemTest.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) 
+			{
+				listener.onPhpUnitTest();
+			}
+
+		});
+		menu.add(itemTest);
+
+		JMenuItem itemOpcode = new JMenuItem("Opcodes");
+		itemOpcode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.CTRL_MASK));
+		itemOpcode.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) 
+			{
+				listener.onPhpOpcode();
+			}
+
+		});
+		menu.add(itemOpcode);
+
+		this.add(menu);
+	}
+
+	protected void buildComposer(JMenu menu)
+	{
 		JMenuItem itemOpen = new JMenuItem("Open");
 		itemOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
 		itemOpen.addActionListener(new ActionListener() {
@@ -194,8 +234,54 @@ public class MenuBar extends JMenuBar
 
 		});
 		menu.add(itemRequire);
+	}
 
-		this.add(menu);
+	protected void buildTemplate()
+	{
+		TemplateManager manager = new TemplateManager();
+		ArrayList<String> templates = null;
+
+		try
+		{
+			templates = manager.getTemplates();
+		}
+		catch(ParserConfigurationException e1)
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		catch(SAXException e1)
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		catch(IOException e1)
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+		if(templates != null && templates.size() > 0)
+		{
+			JMenu menu = new JMenu("Template");
+
+			for(int i = 0; i < templates.size(); i++)
+			{
+				JMenuItem itemTemplate = new JMenuItem(templates.get(i));
+				itemTemplate.addActionListener(new ActionListener() {
+
+					public void actionPerformed(ActionEvent e) 
+					{
+						JMenuItem item = (JMenuItem) e.getSource();
+						listener.onTemplateLoad(item.getText());
+					}
+
+				});
+				menu.add(itemTemplate);
+			}
+
+			this.add(menu);
+		}
 	}
 
 	public interface MenuBarActionListener
@@ -211,5 +297,8 @@ public class MenuBar extends JMenuBar
 		public void onComposerOpen();
 		public void onComposerUpdate();
 		public void onComposerRequire();
+		public void onPhpUnitTest();
+		public void onPhpOpcode();
+		public void onTemplateLoad(String name);
 	}
 }

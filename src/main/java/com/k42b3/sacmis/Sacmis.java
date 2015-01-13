@@ -3,7 +3,7 @@
  * An application wich writes an script from an textarea to a file and executes 
  * it with a selected processor. The result is displayed in another textfield.
  * 
- * Copyright (c) 2010-2014 Christoph Kappestein <k42b3.x@gmail.com>
+ * Copyright (c) 2010-2015 Christoph Kappestein <k42b3.x@gmail.com>
  * 
  * This file is part of sacmis. sacmis is free software: you can 
  * redistribute it and/or modify it under the terms of the GNU 
@@ -24,6 +24,7 @@ package com.k42b3.sacmis;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,6 +34,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -60,10 +62,15 @@ import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
+import org.fife.ui.rsyntaxtextarea.Theme;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
 import com.k42b3.sacmis.MenuBar.MenuBarActionListener;
+import com.k42b3.sacmis.TemplateManager.Package;
+import com.k42b3.sacmis.TemplateManager.Template;
 import com.k42b3.sacmis.executor.Composer;
+import com.k42b3.sacmis.executor.Php;
+import com.k42b3.sacmis.executor.PhpUnit;
 
 /**
  * Sacmis
@@ -74,14 +81,14 @@ import com.k42b3.sacmis.executor.Composer;
  */
 public class Sacmis extends JFrame
 {
-	public static final String VERSION = "0.1.0";
+	public static final String VERSION = "0.2.0";
 
 	protected Logger logger = Logger.getLogger("com.k42b3.sacmis");
 
 	protected int exitCode = 0;
 	protected boolean writeStdIn = false;
 	protected long timeout = 30000;
-	protected String inputCache = "input-%num%.cache";
+	protected String inputCache = "input-%num%.php";
 
 	protected JTabbedPane tp;
 
@@ -181,6 +188,21 @@ public class Sacmis extends JFrame
 				onRequire();
 			}
 
+			public void onPhpUnitTest()
+			{
+				onTest();
+			}
+
+			public void onPhpOpcode()
+			{
+				onOpcode();
+			}
+
+			public void onTemplateLoad(String name)
+			{
+				onTemplate(name);
+			}
+
 		});
 
 		return menuBar;
@@ -188,34 +210,13 @@ public class Sacmis extends JFrame
 
 	protected JComponent buildMainPanel(int num)
 	{
-		// processor
-		JPanel panelNorth = new JPanel();
-		panelNorth.setLayout(new BorderLayout());
-		panelNorth.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-
-		String fileExtension = "";
-		if(System.getProperty("os.name").toLowerCase().startsWith("windows"))
-		{
-			fileExtension = ".bat";
-		}
-
-		String[] calls = {
-			"php %file-" + num + "%",
-			"phpunit" + fileExtension + " --stderr %file-" + num + "%"
-		};
-
-		JComboBox<String> args = new JComboBox<String>(calls);
-		args.setEditable(true);
-
-		panelNorth.add(args, BorderLayout.CENTER);
-
 		// textareas
 		JPanel panelMain = new JPanel();
 		panelMain.setLayout(new BorderLayout());
 		panelMain.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
 		JSplitPane sp = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		
+
 		// in textarea
 		RTextScrollPane scrIn = new RTextScrollPane(new InTextArea());
 		scrIn.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
@@ -236,7 +237,7 @@ public class Sacmis extends JFrame
 		panelMain.add(sp, BorderLayout.CENTER);
 		
 		JPanel panel = new JPanel(new BorderLayout());
-		panel.add(panelNorth, BorderLayout.NORTH);
+		//panel.add(panelNorth, BorderLayout.NORTH);
 		panel.add(panelMain, BorderLayout.CENTER);
 
 		return panel;
@@ -247,17 +248,9 @@ public class Sacmis extends JFrame
 		return (Container) tp.getSelectedComponent();
 	}
 
-	protected JComboBox<String> getActiveArgs()
-	{
-		Container comp = (Container) this.getActivePanel().getComponent(0);
-		JComboBox<String> args = (JComboBox<String>) comp.getComponent(0);
-
-		return args;
-	}
-
 	protected InTextArea getActiveIn()
 	{
-		Container comp = (Container) this.getActivePanel().getComponent(1);
+		Container comp = (Container) this.getActivePanel().getComponent(0);
 		JSplitPane sp = (JSplitPane) comp.getComponent(0);
 		RTextScrollPane scp = (RTextScrollPane) sp.getComponent(1);
 		JViewport vp = (JViewport) scp.getComponent(0);
@@ -268,7 +261,7 @@ public class Sacmis extends JFrame
 	
 	protected OutTextArea getActiveOut()
 	{
-		Container comp = (Container) this.getActivePanel().getComponent(1);
+		Container comp = (Container) this.getActivePanel().getComponent(0);
 		JSplitPane sp = (JSplitPane) comp.getComponent(0);
 		RTextScrollPane scp = (RTextScrollPane) sp.getComponent(2);
 		JViewport vp = (JViewport) scp.getComponent(0);
@@ -441,34 +434,8 @@ public class Sacmis extends JFrame
 
 	protected void onRun()
 	{
-		String cmd;
-		
-		if(this.getActiveArgs().getSelectedIndex() != -1)
-		{
-			cmd = this.getActiveArgs().getSelectedItem().toString();
-		}
-		else
-		{
-			cmd = this.getActiveArgs().getEditor().getItem().toString();
-		}
-		
 		commandQueue = new LinkedList<String>();
-
-		String[] commands = cmd.split(">");
-
-		for(int i = 0; i < commands.length; i++)
-		{
-			String realCmd = commands[i].trim();
-
-			for(int j = 0; j < tp.getTabCount(); j++)
-			{
-				realCmd = realCmd.replaceAll("%file-" + j + "%", inputCache.replaceAll("%num%", "" + j));
-			}
-
-			commandQueue.add(realCmd);
-		}
-
-		logger.info("Added " + commandQueue.size() + " commands to the queue");
+		commandQueue.add("php " + this.getInputFile());
 
 		executeCommand(this.getActiveIn().getText(), tp.getSelectedIndex(), this.writeStdIn);
 	}
@@ -560,6 +527,78 @@ public class Sacmis extends JFrame
 			if(require != null && !require.isEmpty())
 			{
 				new Thread(new Composer("require " + require, getActiveOut())).start();	
+			}
+		}
+		catch(Exception e)
+		{
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Information", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	protected void onTest()
+	{
+		try
+		{
+			this.saveFile();
+
+			new Thread(new PhpUnit(this.getInputFile(), getActiveOut())).start();
+		}
+		catch(Exception e)
+		{
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Information", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	protected void onOpcode()
+	{
+		try
+		{
+			this.saveFile();
+
+			if(ExecutorAbstract.hasExecutable("php --re vld", "vld version"))
+			{
+				new Thread(new Php("-d vld.active=1 -d vld.execute=0 -f" + this.getInputFile(), getActiveOut())).start();
+			}
+			else
+			{
+				throw new Exception("Looks like the PHP vld extension is not installed");
+			}
+		}
+		catch(Exception e)
+		{
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Information", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	protected void onTemplate(String name)
+	{
+		try
+		{
+			TemplateManager manager = new TemplateManager();
+			Template template = manager.getTemplate(name);
+			
+			if(template != null)
+			{
+				ArrayList<Package> packages = template.getRequires();
+				if(packages.size() > 0)
+				{
+					StringBuilder cmd = new StringBuilder();
+					for(int i = 0; i < packages.size(); i++)
+					{
+						cmd.append(packages.get(i).getName());
+						cmd.append("=");
+						cmd.append(packages.get(i).getVersion());
+						cmd.append(" ");
+					}
+
+					new Thread(new Composer("require " + cmd.toString(), getActiveOut())).start();	
+				}
+
+				this.getActiveIn().setText(template.getSource());
+			}
+			else
+			{
+				throw new Exception("Could not find template");
 			}
 		}
 		catch(Exception e)
