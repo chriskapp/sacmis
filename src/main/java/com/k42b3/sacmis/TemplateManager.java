@@ -1,9 +1,7 @@
 package com.k42b3.sacmis;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.ArrayList;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -93,11 +91,11 @@ public class TemplateManager
 	protected Document getDocument() throws ParserConfigurationException, SAXException, IOException
 	{
 		ClassLoader classLoader = getClass().getClassLoader();
-		File file = new File(classLoader.getResource(TEMPLATE_FILE).getFile());
+		InputStream is = classLoader.getResourceAsStream(TEMPLATE_FILE);
 
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db = dbf.newDocumentBuilder();
-		Document doc = db.parse(file);
+		Document doc = db.parse(is);
 
 		return doc;
 	}

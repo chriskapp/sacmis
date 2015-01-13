@@ -23,14 +23,8 @@ package com.k42b3.sacmis;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
-import org.fife.ui.rsyntaxtextarea.Theme;
 
 /**
  * InTextArea
