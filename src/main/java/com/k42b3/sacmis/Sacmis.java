@@ -1,7 +1,7 @@
 /**
  * sacmis
- * An application wich writes an script from an textarea to a file and executes 
- * it with a selected processor. The result is displayed in another textfield.
+ * An application wich executes PHP code and displays the result. Useful for
+ * testing and debugging PHP scripts.
  * 
  * Copyright (c) 2010-2015 Christoph Kappestein <k42b3.x@gmail.com>
  * 
@@ -444,7 +444,7 @@ public class Sacmis extends JFrame
 
 		loadFile();
 	}
-	
+
 	protected void onAbout()
 	{
 		StringBuilder text = new StringBuilder();
@@ -453,12 +453,12 @@ public class Sacmis extends JFrame
 		text.append("Website: https://github.com/k42b3/sacmis" + "\n");
 		text.append("License: GPLv3 <http://www.gnu.org/licenses/gpl-3.0.html>" + "\n");
 		text.append("\n");
-		text.append("An application wich writes an script from an textarea to a file and executes" + "\n");
-		text.append("it with a selected processor. The result is displayed in another textfield." + "\n");
+		text.append("An application wich executes PHP code and displays the result. Useful for" + "\n");
+		text.append("testing and debugging PHP scripts." + "\n");
 
 		this.getActiveOut().setText(text.toString());
 	}
-	
+
 	protected void onExit()
 	{
 		saveFile();

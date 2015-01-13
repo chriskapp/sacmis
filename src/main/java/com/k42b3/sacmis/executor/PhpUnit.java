@@ -1,7 +1,7 @@
 /**
  * sacmis
- * An application wich writes an script from an textarea to a file and executes 
- * it with a selected processor. The result is displayed in another textfield.
+ * An application wich executes PHP code and displays the result. Useful for
+ * testing and debugging PHP scripts.
  * 
  * Copyright (c) 2010-2015 Christoph Kappestein <k42b3.x@gmail.com>
  * 
